@@ -63,7 +63,7 @@ def accuracy_plot(meta, rtl):
     ax.set_yticklabels([r[0] for r in rows], fontsize=9, color=INK)
     ax.set_xlim(94, 100)
     ax.set_xlabel("MNIST classification accuracy (%)", fontsize=9, color=INK2)
-    ax.set_title("Accuracy: quantization costs 0.10%; RTL matches golden exactly",
+    ax.set_title("Quantization costs 0.10%; RTL is bit-exact vs golden",
                  fontsize=10, color=INK, loc="left", pad=12)
     fig.tight_layout()
     fig.savefig(RES / "accuracy.png", facecolor=SURFACE)
@@ -94,7 +94,7 @@ def cycles_plot(sweep, n8):
                     fontsize=8, color=INK2)
     sp = NAIVE_MACS / ys[-1]
     ax.annotate(f"{sp:.1f}× vs baseline", (xs[-1], ys[-1]),
-                xytext=(-8, 14), textcoords="offset points", ha="right",
+                xytext=(-2, 22), textcoords="offset points", ha="right",
                 fontsize=9, color=BLUE, fontweight="bold")
 
     ax.set_xscale("log", base=2)
@@ -189,7 +189,7 @@ def main():
                              f"{k} {v['used']}/{v['avail']}"
                              for k, v in e["utilization"].items()) + "\n")
 
-    (RES / "summary.md").write_text("\n".join(lines) + "\n")
+    (RES / "summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"wrote accuracy.png, cycles.png, summary.md; "
           f"coverage {hit}/{len(bins)}")
 

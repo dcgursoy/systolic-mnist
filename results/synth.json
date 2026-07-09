@@ -1,25 +1,116 @@
 {
   "generic": {
     "pe": {
-      "cells": {},
+      "cells": {
+        "wires": 837,
+        "ports": 9,
+        "cells": 901,
+        "$_ANDNOT_": 22,
+        "$_AND_": 114,
+        "$_DFFE_PN0P_": 8,
+        "$_DFF_PN0_": 40,
+        "$_MUX_": 3,
+        "$_NAND_": 349,
+        "$_NOR_": 3,
+        "$_NOT_": 1,
+        "$_ORNOT_": 31,
+        "$_OR_": 23,
+        "$_XNOR_": 97,
+        "$_XOR_": 210
+      },
+      "wire_bits": 1120,
+      "total_cells": 901,
       "logic_depth": 63
     },
     "array_n4": {
-      "cells": {},
+      "cells": {
+        "wires": 7925,
+        "ports": 7,
+        "cells": 8682,
+        "$_ANDNOT_": 175,
+        "$_AND_": 1437,
+        "$_DFFE_PN0P_": 128,
+        "$_DFF_PN0_": 484,
+        "$_MUX_": 81,
+        "$_NAND_": 3102,
+        "$_NOR_": 14,
+        "$_NOT_": 12,
+        "$_ORNOT_": 137,
+        "$_OR_": 372,
+        "$_XNOR_": 623,
+        "$_XOR_": 2101,
+        "$scopeinfo": 16
+      },
+      "wire_bits": 11587,
+      "total_cells": 8682,
       "logic_depth": 75
     },
     "array_n8": {
-      "cells": {},
+      "cells": {
+        "wires": 44137,
+        "ports": 7,
+        "cells": 47316,
+        "$_ANDNOT_": 1025,
+        "$_AND_": 6112,
+        "$_DFFE_PN0P_": 512,
+        "$_DFF_PN0_": 2136,
+        "$_MUX_": 209,
+        "$_NAND_": 18633,
+        "$_NOR_": 91,
+        "$_NOT_": 62,
+        "$_ORNOT_": 1005,
+        "$_OR_": 1532,
+        "$_XNOR_": 4174,
+        "$_XOR_": 11760,
+        "$scopeinfo": 65
+      },
+      "wire_bits": 64599,
+      "total_cells": 47316,
       "logic_depth": 144
     },
     "accel_top": {
-      "cells": {},
+      "cells": {
+        "wires": 8695,
+        "ports": 14,
+        "cells": 10858,
+        "$_ANDNOT_": 78,
+        "$_AND_": 3923,
+        "$_DFFE_PN0P_": 68,
+        "$_DFFE_PP_": 2048,
+        "$_DFF_PN0_": 41,
+        "$_DFF_P_": 128,
+        "$_MUX_": 5,
+        "$_NAND_": 4385,
+        "$_NOR_": 36,
+        "$_ORNOT_": 22,
+        "$_OR_": 53,
+        "$_XNOR_": 18,
+        "$_XOR_": 19,
+        "$scopeinfo": 34
+      },
+      "wire_bits": 14492,
+      "total_cells": 10858,
       "logic_depth": 166
     }
   },
   "ecp5": {
     "synth_cells": {
-      "cells": {}
+      "cells": {
+        "wires": 4590,
+        "ports": 4,
+        "cells": 81,
+        "$scopeinfo": 35,
+        "DP16KD": 16,
+        "MULT18X18D": 30,
+        "submodules": 8348,
+        "CCU2C": 484,
+        "L6MUX21": 27,
+        "LUT4": 4290,
+        "PFUMX": 438,
+        "TRELLIS_FF": 3109
+      },
+      "wire_bits": 17165,
+      "total_cells": 81
     },
     "fmax_mhz": {
       "$glbnet$clk$TRELLIS_IO_IN": 43.19
