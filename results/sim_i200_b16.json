@@ -1,0 +1,21 @@
+{
+  "images": 200,
+  "batch": 16,
+  "act_errors": 0,
+  "act_checked": 9600,
+  "logit_errors": 0,
+  "logit_checked": 2000,
+  "preds_total": 200,
+  "preds_match_label": 197,
+  "preds_match_golden": 200,
+  "total_cycles": 618992,
+  "runs": 13,
+  "coverage_pct": 89.4,
+  "coverage_hit": 17,
+  "coverage_total": 19,
+  "tb_pass": true,
+  "wall_seconds": 30.3,
+  "rtl_accuracy": 0.985,
+  "rtl_vs_golden_agreement": 1.0,
+  "cycles_per_image": 3094.96
+}
