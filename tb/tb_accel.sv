@@ -21,7 +21,8 @@
 
 module tb_accel;
 
-    localparam int N = 4, DATA_W = 8, ACC_W = 32, B_MAX = 16;
+    parameter  int N = 4;                    // override: iverilog -Ptb_accel.N=8
+    localparam int DATA_W = 8, ACC_W = 32, B_MAX = 16;
     localparam int B_ADDR = $clog2(B_MAX);
     localparam int MAX_IMGS = 200;
 

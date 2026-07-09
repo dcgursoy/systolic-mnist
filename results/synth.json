@@ -1,0 +1,50 @@
+{
+  "generic": {
+    "pe": {
+      "cells": {},
+      "logic_depth": 63
+    },
+    "array_n4": {
+      "cells": {},
+      "logic_depth": 75
+    },
+    "array_n8": {
+      "cells": {},
+      "logic_depth": 144
+    },
+    "accel_top": {
+      "cells": {},
+      "logic_depth": 166
+    }
+  },
+  "ecp5": {
+    "synth_cells": {
+      "cells": {}
+    },
+    "fmax_mhz": {
+      "$glbnet$clk$TRELLIS_IO_IN": 43.19
+    },
+    "utilization": {
+      "TRELLIS_IO": {
+        "used": 4,
+        "avail": 365
+      },
+      "DP16KD": {
+        "used": 16,
+        "avail": 208
+      },
+      "MULT18X18D": {
+        "used": 30,
+        "avail": 156
+      },
+      "TRELLIS_FF": {
+        "used": 3109,
+        "avail": 83640
+      },
+      "TRELLIS_COMB": {
+        "used": 5412,
+        "avail": 83640
+      }
+    }
+  }
+}

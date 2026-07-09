@@ -89,7 +89,10 @@ def main():
     ap.add_argument("--skip-compile", action="store_true")
     ap.add_argument("--stress", action="store_true",
                     help="synthetic corner-case images instead of MNIST")
+    ap.add_argument("--n", type=int, default=4, help="array dimension")
     args = ap.parse_args()
+    if args.n != 4:
+        args.skip_compile = False  # config header + TB param change
     if args.stress:
         args.images = min(args.images, 4)
 
@@ -100,9 +103,16 @@ def main():
 
     gen_expected(build, args.images, stress=args.stress)
 
-    vvp_file = build / "accel.vvp"
+    r = subprocess.run([sys.executable, "sim/gen_config.py", "--n", str(args.n)],
+                       cwd=ROOT, capture_output=True, text=True)
+    if r.returncode != 0:
+        print(r.stdout + r.stderr)
+        sys.exit("gen_config failed")
+
+    vvp_file = build / f"accel_n{args.n}.vvp"
     if not args.skip_compile or not vvp_file.exists():
         cmd = [tool("iverilog"), "-g2012", "-I", str(build),
+               f"-Ptb_accel.N={args.n}",
                "-o", str(vvp_file)] + RTL + ["tb/tb_accel.sv"]
         print("+", " ".join(cmd))
         r = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, env=ENV)
@@ -161,7 +171,9 @@ def main():
     if summary["total_cycles"] and summary["preds_total"]:
         summary["cycles_per_image"] = summary["total_cycles"] / summary["preds_total"]
 
-    tag = f"i{args.images}_b{args.batch}"
+    summary["n"] = args.n
+    tag = f"i{args.images}_b{args.batch}" + ("" if args.n == 4 else f"_n{args.n}") \
+        + ("_stress" if args.stress else "")
     out_file = ROOT / "results" / f"sim_{tag}.json"
     out_file.write_text(json.dumps(summary, indent=2))
     print(json.dumps(summary, indent=2))
