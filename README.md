@@ -6,6 +6,8 @@ executes in simulated hardware — verified bit-exact against a Python golden
 model, animated cycle-by-cycle in a browser, and taken through synthesis +
 place-and-route timing.
 
+**▶ [Live demo — cycle-by-cycle visualizer](https://dcgursoy.github.io/systolic-mnist/viz/)** (replays the actual RTL trace in your browser)
+
 ![visualizer demo](docs/img/viz_demo.gif)
 
 > **Resume bullet (adapt freely):** *Designed and verified a parameterized
