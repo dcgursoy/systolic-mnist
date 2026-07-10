@@ -2,13 +2,13 @@
   "generic": {
     "pe": {
       "cells": {
-        "wires": 837,
-        "ports": 9,
-        "cells": 901,
+        "wires": 840,
+        "ports": 11,
+        "cells": 910,
         "$_ANDNOT_": 22,
         "$_AND_": 114,
-        "$_DFFE_PN0P_": 8,
-        "$_DFF_PN0_": 40,
+        "$_DFFE_PN0P_": 16,
+        "$_DFF_PN0_": 41,
         "$_MUX_": 3,
         "$_NAND_": 349,
         "$_NOR_": 3,
@@ -18,102 +18,103 @@
         "$_XNOR_": 97,
         "$_XOR_": 210
       },
-      "wire_bits": 1120,
-      "total_cells": 901,
-      "logic_depth": 63
+      "wire_bits": 1130,
+      "total_cells": 910,
+      "logic_depth": 64
     },
     "array_n4": {
       "cells": {
-        "wires": 7925,
-        "ports": 7,
-        "cells": 8682,
-        "$_ANDNOT_": 175,
+        "wires": 7975,
+        "ports": 8,
+        "cells": 8811,
+        "$_ANDNOT_": 176,
         "$_AND_": 1437,
-        "$_DFFE_PN0P_": 128,
-        "$_DFF_PN0_": 484,
+        "$_DFFE_PN0P_": 256,
+        "$_DFF_PN0_": 496,
         "$_MUX_": 81,
-        "$_NAND_": 3102,
-        "$_NOR_": 14,
-        "$_NOT_": 12,
-        "$_ORNOT_": 137,
-        "$_OR_": 372,
-        "$_XNOR_": 623,
-        "$_XOR_": 2101,
+        "$_NAND_": 3086,
+        "$_NOR_": 13,
+        "$_NOT_": 8,
+        "$_ORNOT_": 128,
+        "$_OR_": 383,
+        "$_XNOR_": 614,
+        "$_XOR_": 2117,
         "$scopeinfo": 16
       },
-      "wire_bits": 11587,
-      "total_cells": 8682,
-      "logic_depth": 75
+      "wire_bits": 11752,
+      "total_cells": 8811,
+      "logic_depth": 77
     },
     "array_n8": {
       "cells": {
-        "wires": 44137,
-        "ports": 7,
-        "cells": 47316,
-        "$_ANDNOT_": 1025,
-        "$_AND_": 6112,
-        "$_DFFE_PN0P_": 512,
-        "$_DFF_PN0_": 2136,
-        "$_MUX_": 209,
-        "$_NAND_": 18633,
-        "$_NOR_": 91,
-        "$_NOT_": 62,
-        "$_ORNOT_": 1005,
-        "$_OR_": 1532,
-        "$_XNOR_": 4174,
-        "$_XOR_": 11760,
+        "wires": 44310,
+        "ports": 8,
+        "cells": 47807,
+        "$_ANDNOT_": 998,
+        "$_AND_": 6075,
+        "$_DFFE_PN0P_": 1024,
+        "$_DFF_PN0_": 2192,
+        "$_MUX_": 208,
+        "$_NAND_": 18628,
+        "$_NOR_": 86,
+        "$_NOT_": 60,
+        "$_ORNOT_": 1110,
+        "$_OR_": 1442,
+        "$_XNOR_": 4216,
+        "$_XOR_": 11703,
         "$scopeinfo": 65
       },
-      "wire_bits": 64599,
-      "total_cells": 47316,
-      "logic_depth": 144
+      "wire_bits": 65234,
+      "total_cells": 47807,
+      "logic_depth": 146
     },
     "accel_top": {
       "cells": {
-        "wires": 8695,
+        "wires": 8995,
         "ports": 14,
-        "cells": 10858,
-        "$_ANDNOT_": 78,
-        "$_AND_": 3923,
-        "$_DFFE_PN0P_": 68,
+        "cells": 11303,
+        "$_ANDNOT_": 96,
+        "$_AND_": 4057,
+        "$_DFFE_PN0P_": 87,
         "$_DFFE_PP_": 2048,
-        "$_DFF_PN0_": 41,
+        "$_DFF_PN0_": 183,
         "$_DFF_P_": 128,
-        "$_MUX_": 5,
-        "$_NAND_": 4385,
-        "$_NOR_": 36,
-        "$_ORNOT_": 22,
-        "$_OR_": 53,
-        "$_XNOR_": 18,
-        "$_XOR_": 19,
-        "$scopeinfo": 34
+        "$_MUX_": 8,
+        "$_NAND_": 4424,
+        "$_NOR_": 40,
+        "$_NOT_": 3,
+        "$_ORNOT_": 45,
+        "$_OR_": 74,
+        "$_XNOR_": 32,
+        "$_XOR_": 43,
+        "$scopeinfo": 35
       },
-      "wire_bits": 14492,
-      "total_cells": 10858,
-      "logic_depth": 166
+      "wire_bits": 15156,
+      "total_cells": 11303,
+      "logic_depth": 228
     }
   },
   "ecp5": {
     "synth_cells": {
       "cells": {
-        "wires": 4590,
+        "wires": 4699,
         "ports": 4,
-        "cells": 81,
-        "$scopeinfo": 35,
+        "cells": 83,
+        "$scopeinfo": 36,
         "DP16KD": 16,
-        "MULT18X18D": 30,
-        "submodules": 8348,
-        "CCU2C": 484,
-        "L6MUX21": 27,
-        "LUT4": 4290,
-        "PFUMX": 438,
-        "TRELLIS_FF": 3109
+        "MULT18X18D": 31,
+        "submodules": 8837,
+        "CCU2C": 516,
+        "L6MUX21": 38,
+        "LUT4": 4383,
+        "PFUMX": 440,
+        "TRELLIS_FF": 3460
       },
-      "wire_bits": 17165,
-      "total_cells": 81
+      "wire_bits": 17581,
+      "total_cells": 83
     },
     "fmax_mhz": {
-      "$glbnet$clk$TRELLIS_IO_IN": 43.19
+      "$glbnet$clk$TRELLIS_IO_IN": 65.11
     },
     "utilization": {
       "TRELLIS_IO": {
@@ -125,15 +126,15 @@
         "avail": 208
       },
       "MULT18X18D": {
-        "used": 30,
+        "used": 31,
         "avail": 156
       },
       "TRELLIS_FF": {
-        "used": 3109,
+        "used": 3460,
         "avail": 83640
       },
       "TRELLIS_COMB": {
-        "used": 5412,
+        "used": 5605,
         "avail": 83640
       }
     }

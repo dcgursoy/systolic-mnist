@@ -21,16 +21,21 @@ module tb_array_smoke;
     logic [$clog2(N)-1:0]      w_row_sel = 0;
     logic signed [N*DATA_W-1:0] w_col_flat = '0;
     logic signed [N*DATA_W-1:0] a_aligned = '0;
+    logic                      token = 0;
     wire  signed [N*DATA_W-1:0] a_skewed;
+    wire  [N-1:0]              swap_skewed;
     wire  signed [N*ACC_W-1:0]  psum_flat;
 
     skew_buffer #(.N(N), .DATA_W(DATA_W)) u_skew (
         .clk(clk), .rst_n(rst_n), .a_flat(a_aligned), .a_skewed(a_skewed));
 
+    skew_buffer #(.N(N), .DATA_W(1)) u_tok_skew (
+        .clk(clk), .rst_n(rst_n), .a_flat({N{token}}), .a_skewed(swap_skewed));
+
     systolic_array #(.N(N), .DATA_W(DATA_W), .ACC_W(ACC_W)) u_array (
         .clk(clk), .rst_n(rst_n),
         .w_load_en(w_load_en), .w_row_sel(w_row_sel), .w_col_flat(w_col_flat),
-        .a_flat(a_skewed), .psum_flat(psum_flat));
+        .a_flat(a_skewed), .swap_flat(swap_skewed), .psum_flat(psum_flat));
 
     // W[r][c]: weight held by PE(r,c); column c computes sum_r W[r][c]*x[r]
     int W [0:N-1][0:N-1];
@@ -89,7 +94,7 @@ module tb_array_smoke;
         rst_n = 1;
         @(posedge clk);
 
-        // load weights, one row per cycle
+        // load weights into the shadow registers, one row per cycle
         for (r = 0; r < N; r++) begin
             w_load_en <= 1;
             w_row_sel <= r[$clog2(N)-1:0];
@@ -98,6 +103,12 @@ module tb_array_smoke;
             @(posedge clk);
         end
         w_load_en <= 0;
+
+        // swap token promotes shadow -> active on the data wavefront;
+        // vectors follow one cycle behind
+        token <= 1;
+        @(posedge clk);
+        token <= 0;
 
         // stream vectors back-to-back
         for (v = 0; v < NVEC; v++) begin

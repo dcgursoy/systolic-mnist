@@ -8,13 +8,13 @@
   "preds_total": 1,
   "preds_match_label": 1,
   "preds_match_golden": 1,
-  "total_cycles": 24211,
+  "total_cycles": 16270,
   "runs": 1,
   "coverage_pct": 89.4,
   "coverage_hit": 17,
   "coverage_total": 19,
   "tb_pass": true,
-  "wall_seconds": 4.8,
+  "wall_seconds": 3.3,
   "stress": false,
   "cov_bins": {
     "w_zero": "756",
@@ -22,9 +22,9 @@
     "w_neg": "11852",
     "w_max": "1",
     "w_min": "2",
-    "act_zero": "6190",
-    "act_mid": "186",
-    "act_max": "72",
+    "act_zero": "5938",
+    "act_mid": "390",
+    "act_max": "120",
     "req_relu": "12",
     "req_sat": "0",
     "req_mid": "36",
@@ -39,5 +39,6 @@
   },
   "rtl_accuracy": 1.0,
   "rtl_vs_golden_agreement": 1.0,
-  "cycles_per_image": 24211.0
+  "cycles_per_image": 16270.0,
+  "n": 4
 }

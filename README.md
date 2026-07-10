@@ -11,18 +11,19 @@ place-and-route timing.
 > **Resume bullet (adapt freely):** *Designed and verified a parameterized
 > weight-stationary systolic-array accelerator (SystemVerilog) executing full
 > INT8 MNIST inference; achieved 96.5% accuracy (−0.1% vs float32 baseline)
-> with bit-exact RTL/golden-model agreement across 11,600 checked values,
-> 100% functional coverage (19/19 bins), 8.3× cycle-count speedup over a
-> sequential-MAC baseline at batch 16, and 43 MHz Fmax / 5.4k LUTs on an
+> with bit-exact RTL/golden-model agreement across 11,600 checked values and
+> 100% functional coverage (19/19 bins); implemented zero-bubble weight
+> double-buffering via a wavefront swap token for a 13.9× cycle-count
+> speedup over a sequential-MAC baseline (52× at 8×8), timing-closed on an
 > ECP5-85k via Yosys + nextpnr.*
 
 ## Highlights
 
 | | |
 |---|---|
-| **Architecture** | 4×4 (parameterized, also run at 8×8) weight-stationary PE array, skewed activation streaming, per-column INT32 accumulators, integer requantization, tiled schedule for arbitrary layer sizes |
+| **Architecture** | 4×4 (parameterized, also run at 8×8) weight-stationary PE array, skewed activation streaming, double-buffered weights with a wavefront swap token (zero-bubble tile switches), per-column INT32 accumulators, pipelined integer requantization, tiled schedule for arbitrary layer sizes |
 | **Accuracy** | float32 96.63% → INT8 96.53% (10k images); RTL = golden model exactly (200/200 predictions, 2,000 logits, 9,600 hidden activations, zero mismatches) |
-| **Performance** | 3,095 cycles/image @ batch 16 (**8.3×** vs 25,760-cycle 1-MAC/cycle sequential baseline); 1,095 cycles/image (**23.5×**) on the same RTL parameterized to 8×8 |
+| **Performance** | 1,852 cycles/image @ batch 16 (**13.9×** vs 25,760-cycle 1-MAC/cycle sequential baseline); 495 cycles/image (**52×**) on the same RTL parameterized to 8×8 |
 | **Verification** | self-checking TB vs executable golden spec, 3-level bit-exact checks, 19/19 functional coverage bins incl. stress corners, X-checks + protocol assertions |
 | **Implementation** | 10.9k gates (generic synth); ECP5-85k P&R: **43.2 MHz**, 5,412 LUTs, 30 DSPs, 16 BRAMs |
 | **Demo** | zero-dependency browser visualizer replaying the actual per-cycle RTL trace — open [`viz/index.html`](viz/index.html) |
@@ -64,9 +65,10 @@ bottom N+c cycles after its vector enters.
 2. **RTL** ([rtl/](rtl)): the array plus everything around it — packed
    weight/bias memories read with a single incrementing pointer, ping-pong
    N-way-interleaved activation banks, per-column accumulator banks with
-   bias injection, requantize units, and the tiling controller FSM that
-   decomposes each layer into output-block × input-tile passes (layer 0
-   alone is 1,568 4×4 tile passes). [docs/architecture.md](docs/architecture.md)
+   bias injection, pipelined requantize units, double-buffered weights with
+   wavefront swap tokens, and the tiling controller FSM that decomposes
+   each layer into output-block × input-tile passes (layer 0 alone is
+   1,568 4×4 tile passes). [docs/architecture.md](docs/architecture.md)
 3. **Verification** ([tb/](tb), [sim/](sim)): `sim/run_sim.py` generates
    bit-exact expected values from the golden model, compiles with Icarus
    Verilog, and checks *every* hidden activation and logit — not just
@@ -107,40 +109,48 @@ RTL vs golden: 200/200 predictions agree, all 2,000 INT32 logits and all
 | Configuration | Cycles/image | vs sequential MAC |
 |---|---|---|
 | Sequential 1-MAC/cycle baseline (25,760 MACs) | 25,760 | 1.0× |
-| 4×4 array, batch 1 | 24,211 | 1.06× |
-| 4×4 array, batch 4 | 7,273 | 3.54× |
-| 4×4 array, batch 16 | 3,095 | **8.32×** |
-| 8×8 array, batch 16 | 1,095 | **23.52×** |
+| 4×4 array, batch 1 | 16,270 | 1.58× |
+| 4×4 array, batch 4 | 4,090 | 6.30× |
+| 4×4 array, batch 16 | 1,852 | **13.91×** |
+| 8×8 array, batch 16 | 495 | **52.04×** |
 
-Batch 1 is the honest weight-stationary story: loading 16 weights to do 16
-MACs means the array idles during loads, so throughput ≈ the sequential
-baseline. Streaming a batch through each loaded tile amortizes the load —
-utilization scales toward N²·B/(B+overhead) MACs/cycle. This
-load-amortization trade-off is exactly why real weight-stationary
-accelerators (TPU included) crave batch size, and why the 8×8 run at the
-same batch gains another ~2.8× — more MACs retire per streamed element.
+Two effects stack here. **Double-buffered weights** (added as a performance
+rework after the first fully-verified version, which serialized
+load→stream→drain and managed only 8.3× at batch 16): each PE holds a shadow
+weight register loaded underneath the computation, and a swap token riding
+the data wavefront promotes shadow→active with the next tile's vectors one
+cycle behind it — switching tiles costs one slot instead of a
+load-plus-drain. **Batching** then amortizes what overhead remains (the swap
+slot, the shadow-load latency floor visible below batch ≈ N+2, and the
+per-block drain tail): utilization scales toward N²·B/(B+overhead)
+MACs/cycle, which is why weight-stationary accelerators (TPU included) crave
+batch size, and why the 8×8 array at the same batch gains another ~3.7× —
+more MACs retire per streamed element.
+
+The rework re-passed the entire bit-exact regression suite on the first
+attempt — the point of verifying against an executable golden spec is that
+a pure-performance change is provably arithmetic-neutral.
 
 ### Implementation cost
 
 | Module | Cells (generic synth) | Logic depth |
 |---|---|---|
-| 1 PE (INT8 MAC + regs) | 901 | 63 |
-| 4×4 array (16 PEs) | 8,682 | 75 |
-| 8×8 array (64 PEs) | 47,316 | 144 |
-| Full accelerator (4×4) | 10,858 | 166 |
+| 1 PE (INT8 MAC + double-buffered weights) | 910 | 64 |
+| 4×4 array (16 PEs) | 8,811 | 77 |
+| 8×8 array (64 PEs) | 47,807 | 146 |
+| Full accelerator (4×4) | 11,303 | 228 |
 
-Array area scales ≈ linearly in PE count (~543 cells/PE at 4×4 amortized,
-~739 at 8×8 including wider drain adders) while MACs/cycle scale as N² —
-the core efficiency argument for scaling the array. The full-top depth of
-166 is dominated by the unpipelined requantize multiply, which is also the
-ECP5 critical path.
+Array area scales ≈ linearly in PE count while MACs/cycle scale as N² — the
+core efficiency argument for scaling the array. The weight double-buffering
+that removed all load stalls cost 9 cells per PE (~1%): shadow register +
+swap mux — about the cheapest 1.67× cycle-count improvement available.
 
-**ECP5-85k place-and-route (Yosys + nextpnr):** 43.2 MHz Fmax, 5,412 LUTs
-(6%), 3,109 FFs, 30 DSP multipliers, 16 block RAMs, closed with real static
-timing analysis. At 43 MHz / 3,095 cycles ≈ **72 µs per digit** (14k
-images/s) at batch 16. Obvious next timing step: pipeline the requantize
-multiply and register the accumulator read-modify-write, which decouples
-the two longest paths.
+**ECP5-85k place-and-route (Yosys + nextpnr):** **65.1 MHz** Fmax, 5,605
+LUTs (7%), 3,460 FFs, 31 DSP multipliers, 16 block RAMs, closed with real
+static timing analysis. Pipelining the requantize multiply raised Fmax from
+43.2 to 65.1 MHz (+51%); combined with the double-buffering cycle
+reduction, wall-clock throughput improved 2.5× — at 65 MHz / 1,852 cycles ≈
+**28 µs per digit** (35k images/s) at batch 16.
 
 ## Functional coverage
 
@@ -184,13 +194,16 @@ python results/make_plots.py                   # plots + summary tables
 
 ## Honest limitations / next steps
 
-- **Weight loads are not overlapped with compute.** Double-buffered weight
-  registers (load tile *i+1* while computing tile *i*) would hide the
-  (N+1)-cycle load entirely — the single highest-leverage performance fix.
-- **Requantize is combinational** (32×16 multiply): the Fmax critical path.
-  One pipeline stage ≈ free throughput.
-- **Batch=1 latency is bus-limited by design honesty**, not a bug — see the
-  utilization discussion above.
+- **Per-block drain tails and requantize passes are serialized.** The next
+  output block's preload could start while the current block requantizes —
+  another ~10–15% at batch 16, at the cost of a second bias/pointer context.
+- **The accumulator read-modify-write path is now the likely critical
+  path** after pipelining the requantizer; forwarding or a two-bank
+  accumulator would break it.
+- **Batch-1 latency still pays the shadow-load floor** (visible below
+  batch ≈ N+2) and the swap slot per tile — inherent to weight-stationary
+  dataflow with this little reuse; an output-stationary comparison would
+  make a good follow-up study.
 - The testbench loads images through a simple port (784 cycles/image);
   a real system would DMA. Cycle counts above exclude image load, matching
   how accelerator papers report compute latency.

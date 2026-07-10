@@ -15,6 +15,7 @@ module array_top_n8 #(
     input  wire  [$clog2(N)-1:0]       w_row_sel,
     input  wire signed [N*DATA_W-1:0]  w_col_flat,
     input  wire signed [N*DATA_W-1:0]  a_flat,
+    input  wire  [N-1:0]               swap_flat,
     output wire signed [N*ACC_W-1:0]   psum_flat
 );
 

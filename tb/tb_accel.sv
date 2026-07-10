@@ -29,8 +29,8 @@ module tb_accel;
     `include "accel_config.svh"
 
     // state encoding must match accel_top's enum order
-    localparam int ST_IDLE = 0, ST_SETUP = 1, ST_WLOAD = 2, ST_STREAM = 3,
-                   ST_DRAIN = 4, ST_REQ = 5, ST_DONE = 6;
+    localparam int ST_IDLE = 0, ST_SETUP = 1, ST_PRELOAD = 2, ST_RUN = 3,
+                   ST_TAIL = 4, ST_REQ = 5, ST_DONE = 6;
 
     logic clk = 0, rst_n = 0;
     always #5 clk = ~clk;
@@ -92,9 +92,9 @@ module tb_accel;
     integer ci, gi, k;
     always @(negedge clk) begin
         // hidden-layer activation check (every requantize write, bit-exact)
-        if (dut.req_wen_d && !(dut.layer == CFG_NUM_LAYERS - 1)) begin
+        if (dut.req_wen_d2 && !(dut.layer == CFG_NUM_LAYERS - 1)) begin
             for (ci = 0; ci < N; ci = ci + 1) begin
-                gi = batch_base + dut.req_b_d;
+                gi = batch_base + dut.req_b_d2;
                 if (dut.layer == 0) begin
                     if (dut.req_y[ci] !== exp_act0[gi*32 + dut.out_blk*N + ci])
                         act_errors = act_errors + 1;
@@ -116,9 +116,9 @@ module tb_accel;
                     rtl_logits[logits_b][logits_base + ci]
                         = logits_flat[ci*ACC_W +: ACC_W];
         end
-        // protocol assertion: no drains while loading weights
-        if ((|dut.drain_valid) && dut.state == ST_WLOAD) begin
-            $display("FATAL: drain during weight load");
+        // protocol assertion: a block is fully drained before its preload
+        if ((|dut.drain_valid) && dut.state == ST_PRELOAD) begin
+            $display("FATAL: drain during block preload");
             $finish;
         end
     end
@@ -163,9 +163,9 @@ module tb_accel;
                 if (p_tmp < 0) cov_psum_neg = cov_psum_neg + 1;
                 else           cov_psum_pos = cov_psum_pos + 1;
             end
-        if (dut.req_wen_d)
+        if (dut.req_wen_d2)
             for (ci = 0; ci < N; ci = ci + 1) begin
-                acc_tmp = dut.acc_rdata[ci];
+                acc_tmp = dut.acc_rdata_d[ci];
                 if (!(dut.layer == CFG_NUM_LAYERS - 1)) begin
                     if (acc_tmp < 0)                 cov_req_relu = cov_req_relu + 1;
                     else if (dut.req_y[ci] == 127)   cov_req_sat  = cov_req_sat + 1;
@@ -242,12 +242,12 @@ module tb_accel;
                     dut.drain_valid,
                     dut.g_acc[0].u_acc.mem[0], dut.g_acc[1].u_acc.mem[0],
                     dut.g_acc[2].u_acc.mem[0], dut.g_acc[3].u_acc.mem[0]);
-            if (dut.req_wen_d)
+            if (dut.req_wen_d2)
                 $fwrite(tfh, ",\"req\":{\"b\":%0d,\"y\":[%0d,%0d,%0d,%0d],\"acc\":[%0d,%0d,%0d,%0d]}",
-                        dut.req_b_d,
+                        dut.req_b_d2,
                         dut.req_y[0], dut.req_y[1], dut.req_y[2], dut.req_y[3],
-                        dut.acc_rdata[0], dut.acc_rdata[1],
-                        dut.acc_rdata[2], dut.acc_rdata[3]);
+                        dut.acc_rdata_d[0], dut.acc_rdata_d[1],
+                        dut.acc_rdata_d[2], dut.acc_rdata_d[3]);
             $fwrite(tfh, "}\n");
         end
     end

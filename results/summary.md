@@ -15,12 +15,12 @@ RTL vs golden agreement: 100.0% (200/200), logits bit-exact (2000 checked, 0 err
 | Configuration | Cycles/image | vs sequential |
 |---|---|---|
 | Sequential 1-MAC/cycle baseline | 25,760 | 1.0× |
-| 4×4 array, batch 1 | 24,211 | 1.06× |
-| 4×4 array, batch 2 | 12,919 | 1.99× |
-| 4×4 array, batch 4 | 7,273 | 3.54× |
-| 4×4 array, batch 8 | 4,450 | 5.79× |
-| 4×4 array, batch 16 | 3,095 | 8.32× |
-| 8×8 array, batch 16 | 1,095 | 23.52× |
+| 4×4 array, batch 1 | 16,270 | 1.58× |
+| 4×4 array, batch 2 | 8,150 | 3.16× |
+| 4×4 array, batch 4 | 4,090 | 6.30× |
+| 4×4 array, batch 8 | 2,060 | 12.50× |
+| 4×4 array, batch 16 | 1,852 | 13.91× |
+| 8×8 array, batch 16 | 495 | 52.05× |
 
 ## Functional coverage
 
@@ -30,10 +30,10 @@ RTL vs golden agreement: 100.0% (200/200), logits bit-exact (2000 checked, 0 err
 
 | Module | Cells | Logic depth |
 |---|---|---|
-| PE | 901 | 63 |
-| 4×4 array | 8,682 | 75 |
-| 8×8 array | 47,316 | 144 |
-| full top | 10,858 | 166 |
+| PE | 910 | 64 |
+| 4×4 array | 8,811 | 77 |
+| 8×8 array | 47,807 | 146 |
+| full top | 11,303 | 228 |
 
-ECP5-85k place-and-route: Fmax = 43.2 MHz; utilization: TRELLIS_IO 4/365, DP16KD 16/208, MULT18X18D 30/156, TRELLIS_FF 3109/83640, TRELLIS_COMB 5412/83640
+ECP5-85k place-and-route: Fmax = 65.1 MHz; utilization: TRELLIS_IO 4/365, DP16KD 16/208, MULT18X18D 31/156, TRELLIS_FF 3460/83640, TRELLIS_COMB 5605/83640
 

@@ -19,7 +19,7 @@ expected-value files from the golden model before compiling):
 | Logit compare | end-to-end datapath | all 10 INT32 logits per image, bit-exact |
 | Prediction compare | (redundant with logits; sanity) | argmax vs golden argmax + true label |
 | X-check on logit stream | uninitialized/unknown propagation | `$finish` on any X |
-| Drain/protocol assertion | control timing (no drains during weight load) | every cycle |
+| Drain/protocol assertion | control timing (a block fully drains before its preload) | every cycle |
 
 Checking *intermediate* values, not just predictions, matters: an argmax
 agrees with the golden model 10% of the time by luck, per-logit checks
@@ -65,3 +65,13 @@ and batch bins require the stress run, which is the point of having it.
 The trace infrastructure (per-cycle JSON dump of every PE) doubles as a
 debugging tool: bug 1's diagnosis came from grepping requantize events out of
 the trace and diffing against golden layer-0 partial sums.
+
+## Re-verification after the performance rework
+
+The weight double-buffering + pipelined-requantizer rework (swap tokens,
+overlapped drains, batch-modulo accumulator counters, per-column first-tile
+flags) changed control timing everywhere but is *supposed* to be
+arithmetically invisible. Because every expected value is bit-exact and
+independent of schedule, the entire regression list re-ran unchanged and
+passed on the first attempt — which is precisely the payoff of checking
+against an executable spec rather than hand-derived waveforms.

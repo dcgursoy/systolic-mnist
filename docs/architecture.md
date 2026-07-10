@@ -61,6 +61,21 @@ packed offline in exactly the loop order the controller executes
 (layer → output block → input tile → row), the address generator is a single
 incrementing pointer.
 
+### Double-buffered weights and the swap token
+
+Each PE holds two weight registers: loads write the **shadow** register while
+the MAC uses the **active** one, so tile *i+1*'s weights stream into the
+array underneath tile *i*'s computation. The handover is a 1-bit **swap
+token** injected at the west edge through the same per-row skew as the
+activations: it sweeps the array on the data wavefront, and each PE promotes
+shadow → active exactly as the token passes. Since the token moves like a
+data element, the next tile's first vector can follow **one cycle behind
+it** — switching weight tiles costs a single pipeline slot instead of a full
+load-drain serialization. The only ordering constraint is that a shadow row
+must not be rewritten before the previous token has swept that row, which
+the controller guarantees by starting the underlying load N slots into each
+tile's stream.
+
 ## Tiling: mapping a 784×32 matmul onto a 4×4 array
 
 Real accelerators are always much smaller than the workload; the schedule
@@ -69,11 +84,14 @@ below is the standard output-block / reduction-tile decomposition:
 ```
 for layer  l in 0..2:                     # 784x32, 32x16, 16x10(pad 12)
   for output block j in 0..out/4-1:      # 4 output neurons at a time
+    preload tile 0 into shadow regs      # N+1 cycles, once per block
     for input tile i in 0..in/4-1:       # reduce over input in chunks of 4
-      load W[l][j*4..j*4+3][i*4..i*4+3]  # N+1 cycles, weight-stationary
-      stream B activation vectors        # B + fill cycles
-      accumulate column psums            # acc[c][b] += psum (bias on i==0)
-    requantize acc -> int8 acts          # or raw INT32 logits (last layer)
+      issue swap token                   # 1 slot: shadow -> active on the wavefront
+      stream B activation vectors        # B slots; tile i+1's shadow loads
+                                         #   underneath from slot N
+      accumulate column psums            # acc[c][b] += psum (bias on i==0,
+                                         #   flag piped with the drain valids)
+    drain tail, then requantize          # or raw INT32 logits (last layer)
 ```
 
 Layer 0 is 196 input tiles × 8 output blocks = 1568 tile passes; layers 1
@@ -83,13 +101,14 @@ next tile.
 
 ## Batching and utilization (the weight-stationary trade-off)
 
-With batch = 1, each loaded tile performs only 16 MACs before being replaced
-(~14 cycles per tile ≈ 1.1 MACs/cycle) — weight loading dominates, which is
-exactly why weight-stationary designs want data reuse. Streaming B images per
-tile amortizes the load: the same weights serve B×16 MACs. At B = 16 the
-array sustains ~8× more throughput per image than at B = 1. The Results
-section quantifies this and compares against a 1-MAC/cycle sequential
-baseline; scaling to 8×8 quadruples MACs/cycle at the same clock.
+Even with weight loads fully hidden by double buffering, each tile still
+costs a swap slot plus (at small batch) the shadow-load latency floor, and
+each output block pays a drain tail — so per-image cost still falls as more
+images stream per tile pass. Batch = 1 leaves the array mostly waiting on
+its own pipeline; at B = 16 the same weights serve B×16 MACs and per-tile
+overhead is amortized 16 ways. The Results section quantifies this against
+a 1-MAC/cycle sequential baseline; scaling to 8×8 quadruples MACs/cycle at
+the same clock.
 
 ## Between layers: ping-pong activation banks
 

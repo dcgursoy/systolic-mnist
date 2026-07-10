@@ -173,7 +173,7 @@
 (function () {
   const D = window.DEMO;
   const N = D.n, F = D.frames, NF = F.length;
-  const STATES = ["IDLE", "SETUP", "W-LOAD", "STREAM", "DRAIN", "REQUANT", "DONE"];
+  const STATES = ["IDLE", "SETUP", "PRELOAD", "RUN", "DRAIN", "REQUANT", "DONE"];
   const LAYER_NAMES = ["0", "1", "2"];
 
   // ---- input digit ----
@@ -270,7 +270,7 @@
     // weight-load indicator
     if (st === 2) {
       ctx.fillStyle = "#c792ea"; ctx.font = "12px " + mono; ctx.textAlign = "center";
-      ctx.fillText("⇩ loading weight tile (row-by-row)", peX(1.5) + CELL, 22);
+      ctx.fillText("⇩ preloading shadow weights (row-by-row)", peX(1.5) + CELL, 22);
     } else if (st === 5) {
       ctx.fillStyle = "#5af78e"; ctx.font = "12px " + mono; ctx.textAlign = "center";
       ctx.fillText("requantize: acc×M ≫ s → int8 / logits", peX(1.5) + CELL, 22);

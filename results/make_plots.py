@@ -89,8 +89,8 @@ def cycles_plot(sweep, n8):
                     fontsize=8, color=INK2)
     if n8:
         ax.plot([n8[0]], [n8[1]], "s", color=AQUA, ms=8, label="8×8 array")
-        ax.annotate(f"{n8[1]:,.0f}", (n8[0], n8[1]), xytext=(0, -14),
-                    textcoords="offset points", ha="center",
+        ax.annotate(f"{n8[1]:,.0f}", (n8[0], n8[1]), xytext=(-8, -3),
+                    textcoords="offset points", ha="right",
                     fontsize=8, color=INK2)
     sp = NAIVE_MACS / ys[-1]
     ax.annotate(f"{sp:.1f}× vs baseline", (xs[-1], ys[-1]),
@@ -106,8 +106,8 @@ def cycles_plot(sweep, n8):
     ax.set_ylabel("cycles per image", fontsize=9, color=INK2)
     ax.legend(frameon=False, fontsize=9, loc="lower left",
               labelcolor=INK)
-    ax.set_title("Inference latency: batching amortizes weight loads "
-                 "(weight-stationary reuse)",
+    ax.set_title("Inference latency: batching amortizes per-tile overheads "
+                 "(weight loads fully hidden by double buffering)",
                  fontsize=10, color=INK, loc="left", pad=12)
     fig.tight_layout()
     fig.savefig(RES / "cycles.png", facecolor=SURFACE)
