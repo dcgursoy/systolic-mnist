@@ -6,7 +6,7 @@ executes in simulated hardware — verified bit-exact against a Python golden
 model, animated cycle-by-cycle in a browser, and taken through synthesis +
 place-and-route timing.
 
-**▶ [Live demo — cycle-by-cycle visualizer](https://dcgursoy.github.io/systolic-mnist/viz/)** (replays the actual RTL trace in your browser)
+**▶ [Live demo — draw a digit, watch the hardware classify it](https://dcgursoy.github.io/systolic-mnist/viz/)** — cycle-by-cycle, with a built-in "how to read this" manual
 
 ![visualizer demo](docs/img/viz_demo.gif)
 
@@ -28,7 +28,7 @@ place-and-route timing.
 | **Performance** | 1,852 cycles/image @ batch 16 (**13.9×** vs 25,760-cycle 1-MAC/cycle sequential baseline); 495 cycles/image (**52×**) on the same RTL parameterized to 8×8 |
 | **Verification** | self-checking TB vs executable golden spec, 3-level bit-exact checks, 19/19 functional coverage bins incl. stress corners, X-checks + protocol assertions |
 | **Implementation** | 10.9k gates (generic synth); ECP5-85k P&R: **43.2 MHz**, 5,412 LUTs, 30 DSPs, 16 BRAMs |
-| **Demo** | zero-dependency browser visualizer replaying the actual per-cycle RTL trace — open [`viz/index.html`](viz/index.html) |
+| **Demo** | interactive browser visualizer: draw/upload any digit and watch it stream through the array cycle-by-cycle, driven by a JavaScript twin of the RTL validated **frame-exact** against the Icarus trace (16,271/16,271 frames) and **logit-exact** against the golden model (200/200 images) |
 
 ## Why a systolic array
 
@@ -78,12 +78,17 @@ bottom N+c cycles after its vector enters.
    off-by-one, an unsigned-concatenation sign bug in the requantizer, a
    `done`-latch race); the bug log is part of
    [docs/verification.md](docs/verification.md).
-4. **Visualizer** ([viz/](viz)): the testbench dumps every PE's
-   activation/weight/partial-sum every cycle (24,212 cycles for one image)
-   as JSON; a dependency-free Canvas app replays it with play/pause/step,
-   speed control, per-layer jumps, live logit accumulation, and an RTL-vs-
-   float32 comparison panel. It renders the *actual* simulation, not a
-   cartoon of it.
+4. **Visualizer** ([viz/](viz)): a dependency-free Canvas app with a
+   game-style intro manual, a drawable 28×28 input (plus upload and example
+   digits), play/pause/step/speed/jump transport, a caption bar narrating
+   each controller state, live logit accumulation, and an RTL-vs-float
+   comparison panel. It's driven by `sim.js`, a **register-for-register
+   JavaScript twin of the RTL** (same FSM, skew pipelines, swap tokens,
+   requantize pipeline) so users can classify *their own* digits —
+   `viz/validate_sim.py` proves the twin frame-exact against the Icarus
+   Verilog per-cycle trace (every PE value, all 16,271 cycles) and
+   logit-exact against the golden model on all 200 test images. The RTL
+   testbench's JSON trace dump is what makes that validation possible.
 5. **Synthesis** ([synth/](synth)): Yosys generic synthesis for
    technology-independent gate counts and logic depth, plus
    `synth_ecp5` → `nextpnr-ecp5` place-and-route on a Lattice ECP5-85k for
@@ -188,8 +193,9 @@ python sim/run_sim.py --images 200 --batch 16  # main RTL regression
 python sim/run_sim.py --stress --batch 1       # coverage corners
 python sim/run_sim.py --images 200 --batch 16 --n 8   # 8x8 array
 python sim/run_sim.py --images 1 --batch 1 --trace sim/traces/img0.json
-python viz/build_demo.py                       # package trace for the viz
-start viz/index.html                           # the demo
+python viz/build_demo.py                       # package weights for the viz
+python viz/validate_sim.py                     # JS twin vs RTL trace (frame-exact)
+start viz/index.html                           # the interactive demo
 python synth/run_synth.py                      # gate counts + ECP5 timing
 python results/make_plots.py                   # plots + summary tables
 ```

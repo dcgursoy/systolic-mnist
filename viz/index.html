@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Systolic Array MNIST Accelerator — Cycle Visualizer</title>
+<title>Systolic Array MNIST Accelerator — Interactive Cycle Visualizer</title>
 <style>
   :root {
     --bg: #0e1116; --panel: #161b24; --edge: #232b38;
@@ -22,10 +22,11 @@
   }
   header h1 { font-size: 16px; font-weight: 600; letter-spacing: .3px; }
   header .sub { color: var(--dim); font-size: 12px; }
-  #chips { margin-left: auto; display: flex; gap: 8px; font-family: Consolas, monospace; font-size: 12px; }
+  #chips { margin-left: auto; display: flex; gap: 8px; font-family: Consolas, monospace; font-size: 12px; align-items: center; }
   .chip { background: var(--panel); border: 1px solid var(--edge); border-radius: 4px; padding: 3px 9px; white-space: nowrap; }
   .chip b { color: var(--act); font-weight: 600; }
   #state-chip b { color: var(--psum); }
+  #btn-help { width: 28px; height: 28px; border-radius: 50%; padding: 0; font-weight: 700; }
 
   main { flex: 1; display: flex; gap: 14px; padding: 12px 18px; min-height: 0; }
   .col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
@@ -37,14 +38,20 @@
     font-size: 11px; font-weight: 600; text-transform: uppercase;
     letter-spacing: 1.2px; color: var(--dim); margin-bottom: 9px;
   }
-  #left { width: 240px; flex-shrink: 0; }
-  #digit-canvas { image-rendering: pixelated; width: 196px; height: 196px; display: block; margin: 0 auto; border: 1px solid var(--edge); border-radius: 4px; }
+  #left { width: 250px; flex-shrink: 0; }
+  #draw-canvas { image-rendering: pixelated; width: 196px; height: 196px; display: block; margin: 0 auto; border: 1px solid var(--edge); border-radius: 4px; cursor: crosshair; touch-action: none; }
+  #input-tools { display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
+  #input-tools button { padding: 3px 10px; font-size: 11px; }
+  #examples { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; margin-top: 8px; }
+  #examples canvas { width: 100%; image-rendering: pixelated; border: 1px solid var(--edge); border-radius: 3px; cursor: pointer; }
+  #examples canvas:hover, #examples canvas.sel { border-color: var(--act); }
+  #btn-run { width: 100%; margin-top: 9px; padding: 8px; font-size: 13px; font-weight: 700; letter-spacing: .5px; }
   #pred-card { text-align: center; }
-  #pred-digit { font-size: 52px; font-weight: 700; font-family: Consolas, monospace; color: var(--faint); line-height: 1.1; }
+  #pred-digit { font-size: 46px; font-weight: 700; font-family: Consolas, monospace; color: var(--faint); line-height: 1.1; }
   #pred-digit.live { color: var(--ok); }
   #pred-conf { color: var(--dim); font-size: 12px; }
-  #pred-note { font-size: 11px; color: var(--faint); margin-top: 4px; }
-  #progress-card .row { display: flex; justify-content: space-between; font-family: Consolas, monospace; font-size: 12px; color: var(--dim); margin: 3px 0; }
+  #pred-note { font-size: 11px; color: var(--faint); margin-top: 3px; }
+  #progress-card .row { display: flex; justify-content: space-between; font-family: Consolas, monospace; font-size: 11.5px; color: var(--dim); margin: 3px 0; }
   #progress-card .row b { color: var(--text); font-weight: 600; }
   .pbar { height: 4px; background: var(--edge); border-radius: 2px; margin-top: 2px; }
   .pbar div { height: 100%; background: var(--act); border-radius: 2px; width: 0%; }
@@ -53,6 +60,10 @@
   #array-card { width: 100%; height: 100%; display: flex; flex-direction: column; }
   #array-wrap { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; }
   #array-canvas { max-width: 100%; max-height: 100%; }
+  #caption { font-family: Consolas, monospace; font-size: 12px; color: var(--dim); text-align: center; min-height: 18px; margin-top: 4px; }
+  #caption b { color: var(--psum); font-weight: 600; }
+  .legend { display: flex; gap: 14px; font-size: 11px; color: var(--dim); margin-top: 6px; justify-content: center; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
 
   #right { width: 300px; flex-shrink: 0; }
   .logit-row { display: grid; grid-template-columns: 14px 1fr 1fr; gap: 8px; align-items: center; margin: 4px 0; font-family: Consolas, monospace; font-size: 11px; }
@@ -64,10 +75,9 @@
   .bar.float div { background: #7c5fd3; }
   .bar.rtl div { background: #1c8ba8; }
   .bar.rtl.pending div { background: var(--faint); }
+  #float-label { font-size: 10px; }
   #verdict { margin-top: 10px; font-family: Consolas, monospace; font-size: 12px; color: var(--dim); }
   #verdict .ok { color: var(--ok); font-weight: 700; }
-  .legend { display: flex; gap: 14px; font-size: 11px; color: var(--dim); margin-top: 8px; }
-  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
 
   footer { border-top: 1px solid var(--edge); padding: 10px 18px 12px; display: flex; flex-direction: column; gap: 8px; }
   #transport { display: flex; align-items: center; gap: 8px; }
@@ -83,40 +93,66 @@
   #jumps { display: flex; gap: 6px; font-size: 11px; color: var(--dim); align-items: center; }
   #jumps button { padding: 3px 9px; font-size: 11px; }
   kbd { background: var(--edge); border-radius: 3px; padding: 0 5px; font-size: 10px; }
+
+  /* ---- intro overlay ---- */
+  #overlay { position: fixed; inset: 0; background: rgba(8,10,14,.82); display: flex; align-items: center; justify-content: center; z-index: 50; backdrop-filter: blur(2px); }
+  #overlay.hidden { display: none; }
+  #manual { width: 620px; max-width: 92vw; background: var(--panel); border: 1px solid #2c3646; border-radius: 12px; padding: 26px 30px 20px; box-shadow: 0 12px 60px rgba(0,0,0,.6); }
+  #manual h3 { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--act); margin-bottom: 6px; }
+  #manual h2 { font-size: 20px; margin-bottom: 12px; }
+  #manual .body { color: var(--dim); font-size: 13.5px; line-height: 1.6; min-height: 170px; }
+  #manual .body b { color: var(--text); }
+  #manual .body .cyan { color: var(--act); } #manual .body .org { color: var(--psum); }
+  #manual .body .grn { color: var(--ok); } #manual .body .prp { color: var(--gold); }
+  #manual .diagram { font-family: Consolas, monospace; font-size: 12px; background: #0b0e13; border-radius: 6px; padding: 10px 14px; margin: 10px 0; color: var(--dim); white-space: pre; overflow-x: auto; }
+  #manual-nav { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
+  #manual-dots { display: flex; gap: 6px; }
+  #manual-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--edge); }
+  #manual-dots i.on { background: var(--act); }
+  #manual-nav .spacer { flex: 1; }
+  #manual label { font-size: 11px; color: var(--faint); display: flex; align-items: center; gap: 5px; }
 </style>
 </head>
 <body>
 <header>
   <h1>Systolic Array MNIST Accelerator</h1>
-  <span class="sub">4×4 weight-stationary · INT8 · per-cycle RTL trace (Icarus Verilog)</span>
+  <span class="sub">4×4 weight-stationary · INT8 · cycle-accurate twin of the SystemVerilog RTL</span>
   <div id="chips">
     <span class="chip">cycle <b id="c-cyc">0</b></span>
     <span class="chip" id="state-chip">state <b id="c-state">—</b></span>
     <span class="chip">layer <b id="c-layer">—</b></span>
     <span class="chip">tile <b id="c-tile">—</b></span>
     <span class="chip">block <b id="c-blk">—</b></span>
+    <button id="btn-help" title="how to read this">?</button>
   </div>
 </header>
 
 <main>
   <div class="col" id="left">
     <div class="card">
-      <h2>Input · MNIST test image</h2>
-      <canvas id="digit-canvas" width="28" height="28"></canvas>
+      <h2>Input · draw a digit or pick one</h2>
+      <canvas id="draw-canvas" width="28" height="28"></canvas>
+      <div id="input-tools">
+        <button id="btn-clear">✕ clear</button>
+        <button id="btn-upload">⤒ upload</button>
+        <input type="file" id="file-in" accept="image/*" hidden>
+      </div>
+      <div id="examples"></div>
+      <button id="btn-run" class="primary">▶ RUN INFERENCE</button>
     </div>
     <div class="card" id="pred-card">
       <h2>RTL Prediction</h2>
       <div id="pred-digit">·</div>
-      <div id="pred-conf">accumulating…</div>
+      <div id="pred-conf">draw or pick a digit, then run</div>
       <div id="pred-note"></div>
     </div>
     <div class="card" id="progress-card">
       <h2>Network Progress</h2>
-      <div class="row"><span>L0 · 784→32</span><b id="p0t">0/196 tiles</b></div>
+      <div class="row"><span>L0 · 784→32</span><b id="p0t">—</b></div>
       <div class="pbar"><div id="p0"></div></div>
-      <div class="row"><span>L1 · 32→16</span><b id="p1t">0/8 tiles</b></div>
+      <div class="row"><span>L1 · 32→16</span><b id="p1t">—</b></div>
       <div class="pbar"><div id="p1"></div></div>
-      <div class="row"><span>L2 · 16→10</span><b id="p2t">0/4 tiles</b></div>
+      <div class="row"><span>L2 · 16→10</span><b id="p2t">—</b></div>
       <div class="pbar"><div id="p2"></div></div>
     </div>
   </div>
@@ -125,9 +161,10 @@
     <div class="card" id="array-card">
       <h2>Processing-Element Array — activations flow →, partial sums flow ↓</h2>
       <div id="array-wrap"><canvas id="array-canvas" width="620" height="600"></canvas></div>
+      <div id="caption"></div>
       <div class="legend">
-        <span><i style="background:var(--act)"></i>activation (INT8)</span>
-        <span><i style="background:var(--psum)"></i>partial sum (INT32)</span>
+        <span><i style="background:var(--act)"></i>activation</span>
+        <span><i style="background:var(--psum)"></i>partial sum</span>
         <span><i style="background:#666"></i>stationary weight</span>
         <span><i style="background:var(--ok)"></i>drain → accumulator</span>
       </div>
@@ -136,9 +173,9 @@
 
   <div class="col" id="right">
     <div class="card">
-      <h2>Correctness · RTL vs float32 model</h2>
+      <h2>Correctness · RTL vs float model</h2>
       <div id="logits"></div>
-      <div id="verdict">waiting for final layer…</div>
+      <div id="verdict">run an inference to compare</div>
     </div>
   </div>
 </main>
@@ -152,8 +189,8 @@
     <select id="speed">
       <option value="2">2 cyc/s</option>
       <option value="10">10 cyc/s</option>
-      <option value="60" selected>60 cyc/s</option>
-      <option value="600">600 cyc/s</option>
+      <option value="60">60 cyc/s</option>
+      <option value="600" selected>600 cyc/s</option>
       <option value="6000">6000 cyc/s</option>
     </select>
     <input type="range" id="scrub" min="0" max="0" value="0">
@@ -168,28 +205,212 @@
   </div>
 </footer>
 
-<script src="trace_data.js"></script>
+<!-- ---- intro manual ---- -->
+<div id="overlay" class="hidden">
+  <div id="manual">
+    <h3>How to read this screen</h3>
+    <h2 id="man-title"></h2>
+    <div class="body" id="man-body"></div>
+    <div id="manual-nav">
+      <div id="manual-dots"></div>
+      <label><input type="checkbox" id="man-skip"> don't show again</label>
+      <span class="spacer"></span>
+      <button id="man-back">← back</button>
+      <button id="man-next" class="primary">next →</button>
+    </div>
+  </div>
+</div>
+
+<script src="model_data.js"></script>
+<script src="sim.js"></script>
 <script>
 (function () {
-  const D = window.DEMO;
-  const N = D.n, F = D.frames, NF = F.length;
+  const M = window.MODEL;
+  const N = M.n;
   const STATES = ["IDLE", "SETUP", "PRELOAD", "RUN", "DRAIN", "REQUANT", "DONE"];
-  const LAYER_NAMES = ["0", "1", "2"];
+  const el = id => document.getElementById(id);
 
-  // ---- input digit ----
-  const dctx = document.getElementById("digit-canvas").getContext("2d");
-  const dimg = dctx.createImageData(28, 28);
-  for (let i = 0; i < 784; i++) {
-    const v = Math.round(D.img[i] / 127 * 255);
-    dimg.data[i * 4] = v * 0.30; dimg.data[i * 4 + 1] = v * 0.85;
-    dimg.data[i * 4 + 2] = v; dimg.data[i * 4 + 3] = 255;
+  // ================= intro manual =================
+  const SLIDES = [
+    ["You are watching real hardware",
+     `This is a <b>systolic-array AI accelerator</b> — the same dataflow that
+      powers Google's TPU — classifying a handwritten digit. Every animation
+      frame is <b>one clock cycle</b> of a SystemVerilog design, reproduced
+      by a JavaScript twin that is validated <b>cycle-exact</b> against the
+      Icarus Verilog RTL simulation (16,271/16,271 frames identical).
+      <div class="diagram">image → [ 784→32→16→10 neural net, all INT8 ] → digit</div>
+      Nothing here is a cartoon: every number you'll see existed in the
+      simulated silicon.`],
+    ["Reading the array",
+     `The grid is 4×4 <b>processing elements</b>. Each one holds a
+      <b>weight</b> (w, gray) and does one multiply-accumulate per cycle.
+      <div class="diagram"> x[0] ─▶ <span class="cyan">a</span> flows east ─▶
+ x[1] ──▶  each PE: Σ += a·w
+ x[2] ───▶   <span class="org">Σ</span> falls south ▼
+ x[3] ────▶ <span class="grn">drain → accumulators</span></div>
+      <span class="cyan">Activations</span> (pixels) enter from the left,
+      one row delayed per step — that makes the diagonal <b>wave</b> you'll
+      see. <span class="org">Partial sums</span> cascade down each column
+      and <span class="grn">drain</span> into 32-bit accumulators.`],
+    ["Tiles, layers, requantize",
+     `The network is far bigger than 16 PEs, so each weight matrix is cut
+      into <b>4×4 tiles</b> streamed through the array (layer 0 alone is
+      1,568 tiles — watch the <b>tile / block</b> counters fly). New tiles
+      load into <span class="prp">shadow registers</span> underneath the
+      computation and swap in on a wavefront — zero wasted cycles.<br><br>
+      After each layer, <b>REQUANT</b> squeezes the 32-bit sums back to
+      8-bit (that's the INT8 in "INT8 accelerator"). The last layer's raw
+      sums are the <b>logits</b> — largest one wins.`],
+    ["Your turn",
+     `<b>Draw a digit</b> in the input box (or click an example, or upload
+      an image), then hit <b>RUN INFERENCE</b> — the accelerator runs
+      <i>your</i> pixels.<br><br>
+      <b>Controls:</b> <kbd>space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd>
+      step one cycle · speed menu up to 6,000 cyc/s · jump buttons to skip
+      between layers · the scrubber goes anywhere.<br><br>
+      Tip: freeze mid-wave with <kbd>space</kbd> and read any PE — a × w
+      accumulating into Σ. That's the whole trick, 16 times per cycle.`],
+  ];
+  let slide = 0;
+  function renderSlide() {
+    el("man-title").textContent = SLIDES[slide][0];
+    el("man-body").innerHTML = SLIDES[slide][1];
+    el("manual-dots").innerHTML =
+      SLIDES.map((_, i) => `<i class="${i === slide ? "on" : ""}"></i>`).join("");
+    el("man-back").style.visibility = slide ? "visible" : "hidden";
+    el("man-next").textContent = slide === SLIDES.length - 1 ? "start ▶" : "next →";
   }
-  dctx.putImageData(dimg, 0, 0);
+  function openManual() { slide = 0; renderSlide(); el("overlay").classList.remove("hidden"); }
+  function closeManual() {
+    el("overlay").classList.add("hidden");
+    if (el("man-skip").checked) localStorage.setItem("sysarr_intro_seen", "1");
+  }
+  el("man-next").onclick = () => { if (slide < SLIDES.length - 1) { slide++; renderSlide(); } else closeManual(); };
+  el("man-back").onclick = () => { if (slide > 0) { slide--; renderSlide(); } };
+  el("btn-help").onclick = openManual;
+  if (!localStorage.getItem("sysarr_intro_seen")) openManual();
 
-  // ---- logits panel ----
-  const logitsDiv = document.getElementById("logits");
-  const fmax = Math.max(...D.floatLogits.map(Math.abs));
+  // ================= input: draw / upload / examples =================
+  const dcv = el("draw-canvas"), dctx = dcv.getContext("2d");
+  let pix = new Array(784).fill(0);        // int8 0..127
+  let inputMeta = null;                    // example metadata, if any
+
+  function paintInput() {
+    const im = dctx.createImageData(28, 28);
+    for (let i = 0; i < 784; i++) {
+      const v = Math.round(pix[i] / 127 * 255);
+      im.data[i * 4] = v * 0.30; im.data[i * 4 + 1] = v * 0.85;
+      im.data[i * 4 + 2] = v; im.data[i * 4 + 3] = 255;
+    }
+    dctx.putImageData(im, 0, 0);
+  }
+  function setInput(p, meta) {
+    pix = p.slice(); inputMeta = meta || null;
+    document.querySelectorAll("#examples canvas").forEach(c =>
+      c.classList.toggle("sel", meta && +c.dataset.i === meta.i));
+    paintInput();
+  }
+
+  // soft brush drawing
+  let drawing = false;
+  function daub(e) {
+    const r = dcv.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width * 28;
+    const y = (e.clientY - r.top) / r.height * 28;
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) {
+        const px = Math.round(x + dx), py = Math.round(y + dy);
+        if (px < 0 || px > 27 || py < 0 || py > 27) continue;
+        const d = Math.hypot(px + 0.5 - x, py + 0.5 - y);
+        const add = Math.max(0, 127 * (1.15 - d * 0.75));
+        const i = py * 28 + px;
+        pix[i] = Math.min(127, Math.round(pix[i] + add));
+      }
+    inputMeta = null;
+    document.querySelectorAll("#examples canvas").forEach(c => c.classList.remove("sel"));
+    paintInput();
+  }
+  dcv.addEventListener("pointerdown", e => { drawing = true; daub(e); });
+  window.addEventListener("pointermove", e => { if (drawing) daub(e); });
+  window.addEventListener("pointerup", () => drawing = false);
+  el("btn-clear").onclick = () => setInput(new Array(784).fill(0), null);
+
+  // center-of-mass shift (MNIST-style preprocessing for drawn digits)
+  function centerDigit(p) {
+    let sx = 0, sy = 0, s = 0;
+    for (let i = 0; i < 784; i++) {
+      s += p[i]; sx += (i % 28) * p[i]; sy += ((i / 28) | 0) * p[i];
+    }
+    if (!s) return p;
+    const dx = Math.round(13.5 - sx / s), dy = Math.round(13.5 - sy / s);
+    const out = new Array(784).fill(0);
+    for (let y = 0; y < 28; y++)
+      for (let x = 0; x < 28; x++) {
+        const nx = x + dx, ny = y + dy;
+        if (nx >= 0 && nx < 28 && ny >= 0 && ny < 28)
+          out[ny * 28 + nx] = p[y * 28 + x];
+      }
+    return out;
+  }
+
+  // upload -> 28x28 grayscale, auto-invert if background is bright
+  el("btn-upload").onclick = () => el("file-in").click();
+  el("file-in").onchange = e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const img = new Image();
+    img.onload = () => {
+      const oc = document.createElement("canvas");
+      oc.width = oc.height = 28;
+      const octx = oc.getContext("2d");
+      octx.fillStyle = "#000"; octx.fillRect(0, 0, 28, 28);
+      octx.drawImage(img, 0, 0, 28, 28);
+      const d = octx.getImageData(0, 0, 28, 28).data;
+      let p = new Array(784);
+      for (let i = 0; i < 784; i++)
+        p[i] = (d[i * 4] * 0.299 + d[i * 4 + 1] * 0.587 + d[i * 4 + 2] * 0.114);
+      let border = 0, nb = 0;
+      for (let i = 0; i < 784; i++) {
+        const x = i % 28, y = (i / 28) | 0;
+        if (x === 0 || y === 0 || x === 27 || y === 27) { border += p[i]; nb++; }
+      }
+      if (border / nb > 100) p = p.map(v => 255 - v);       // dark-on-light -> invert
+      const mx = Math.max(...p, 1);
+      p = p.map(v => Math.round(Math.max(0, v / mx * 127 - 6)));
+      setInput(centerDigit(p), null);
+      URL.revokeObjectURL(img.src);
+    };
+    img.src = URL.createObjectURL(f);
+    e.target.value = "";
+  };
+
+  // example strip
+  const exDiv = el("examples");
+  M.examples.forEach((ex, i) => {
+    const c = document.createElement("canvas");
+    c.width = c.height = 28; c.dataset.i = i;
+    c.title = "test digit " + ex.label;
+    const cx = c.getContext("2d");
+    const im = cx.createImageData(28, 28);
+    for (let k = 0; k < 784; k++) {
+      const v = Math.round(ex.pix[k] / 127 * 255);
+      im.data[k * 4] = v * 0.3; im.data[k * 4 + 1] = v * 0.85;
+      im.data[k * 4 + 2] = v; im.data[k * 4 + 3] = 255;
+    }
+    cx.putImageData(im, 0, 0);
+    c.onclick = () => setInput(ex.pix, {i, label: ex.label,
+      floatLogits: ex.floatLogits, trueFloat: true});
+    exDiv.appendChild(c);
+  });
+
+  // ================= logits panel =================
+  const logitsDiv = el("logits");
   const rows = [];
+  const hdr = document.createElement("div");
+  hdr.className = "logit-row"; hdr.style.color = "var(--dim)";
+  hdr.innerHTML = `<span></span><span id="float-label">float32 golden</span>` +
+                  `<span style="font-size:10px">RTL INT32 (dequant)</span>`;
+  logitsDiv.appendChild(hdr);
   for (let k = 0; k < 10; k++) {
     const row = document.createElement("div");
     row.className = "logit-row";
@@ -200,59 +421,73 @@
     logitsDiv.appendChild(row);
     rows.push(row);
   }
-  const hdr = document.createElement("div");
-  hdr.className = "logit-row"; hdr.style.color = "var(--dim)";
-  hdr.innerHTML = `<span></span><span style="font-size:10px">float32 golden</span><span style="font-size:10px">RTL INT32 (dequant)</span>`;
-  logitsDiv.prepend(hdr);
-  function drawBar(el, v, vmax) {
+  function drawBar(elb, v, vmax) {
     const half = 50, w = Math.min(49, Math.abs(v) / vmax * half);
-    const bar = el.querySelector("div");
+    const bar = elb.querySelector("div");
     bar.style.left = v < 0 ? (half - w) + "%" : half + "%";
     bar.style.width = w + "%";
-    el.querySelector("span").textContent = v.toFixed(1);
+    elb.querySelector("span").textContent = v.toFixed(1);
   }
-  const floatBest = D.floatLogits.indexOf(Math.max(...D.floatLogits));
-  rows.forEach((r, k) => drawBar(r.querySelector(".float"), D.floatLogits[k], fmax));
 
-  // ---- logits state reconstruction (scrub-safe) ----
-  let logitCache = { idx: -1, vals: new Array(10).fill(null) };
-  function logitsAt(idx) {
-    if (idx < logitCache.idx) logitCache = { idx: -1, vals: new Array(10).fill(null) };
-    for (let i = logitCache.idx + 1; i <= idx; i++) {
-      const f = F[i];
-      if (f.req && f.l === 2) {
-        const base = f.j * N;
-        for (let c = 0; c < N; c++)
-          if (base + c < 10) logitCache.vals[base + c] = f.req.acc[c];
-      }
+  // ================= player state =================
+  let F = [], NF = 0, layerStart = [0, 0, 0], resStart = 0;
+  let floatLogits = null, floatBest = -1, trueLabel = null;
+  let logitCache = {idx: -1, vals: new Array(10).fill(null)};
+  let idx = 0, playing = false, acc = 0, last = 0;
+  const scrub = el("scrub");
+
+  function runInference() {
+    setPlaying(false);
+    let p = pix;
+    if (!inputMeta) p = centerDigit(pix);       // preprocess drawn/uploaded
+    if (p.every(v => v === 0)) {
+      el("pred-conf").textContent = "draw something first!";
+      return;
     }
-    logitCache.idx = idx;
-    return logitCache.vals;
-  }
+    const res = AccelSim.simulate(p, M, {record: true});
+    F = res.frames; NF = F.length;
+    layerStart = [0, NF - 1, NF - 1]; resStart = NF - 1;
+    for (let i = 0, seen = 0; i < NF; i++) {
+      if (F[i].l > seen) { layerStart[F[i].l] = i; seen = F[i].l; }
+      if (F[i].l === 2 && F[i].req) { resStart = Math.max(0, i - 4); break; }
+    }
+    logitCache = {idx: -1, vals: new Array(10).fill(null)};
+    scrub.max = NF - 1;
 
-  // ---- layer start indices for jumps / progress ----
-  const layerStart = [0, NF - 1, NF - 1];
-  let resStart = NF - 1;
-  for (let i = 0, seen = 0; i < NF; i++) {
-    if (F[i].l > seen) { layerStart[F[i].l] = i; seen = F[i].l; }
-    if (F[i].l === 2 && F[i].req) { resStart = Math.max(0, i - 4); break; }
-  }
+    if (inputMeta && inputMeta.trueFloat) {
+      floatLogits = inputMeta.floatLogits;
+      trueLabel = inputMeta.label;
+      el("float-label").textContent = "float32 golden";
+    } else {
+      floatLogits = AccelSim.floatForward(p, M);
+      trueLabel = null;
+      el("float-label").textContent = "float ref (dequant)";
+    }
+    floatBest = floatLogits.indexOf(Math.max(...floatLogits));
+    const fmax = Math.max(...floatLogits.map(Math.abs));
+    rows.forEach((r, k) => drawBar(r.querySelector(".float"), floatLogits[k], fmax));
 
-  // ---- array canvas ----
-  const cv = document.getElementById("array-canvas");
-  const ctx = cv.getContext("2d");
+    show(0);
+    setPlaying(true);
+  }
+  el("btn-run").onclick = runInference;
+
+  // ================= array canvas =================
+  const cv = el("array-canvas"), ctx = cv.getContext("2d");
   const CELL = 108, GAP = 14, AX = 96, AY = 64;
   const mono = "Consolas, monospace";
-
   function peX(c) { return AX + c * (CELL + GAP); }
   function peY(r) { return AY + r * (CELL + GAP); }
   function heat(v, vmax) { return Math.min(1, Math.abs(v) / vmax); }
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
 
   function drawArray(f) {
     ctx.clearRect(0, 0, cv.width, cv.height);
-    const st = f.st;
-
-    // west-edge activation lanes
     for (let r = 0; r < N; r++) {
       const a = f.pe[r][0].a;
       const y = peY(r) + CELL / 2;
@@ -262,41 +497,31 @@
       ctx.fillStyle = a !== 0 ? "#3ddcff" : "#4a5568";
       ctx.font = "11px " + mono; ctx.textAlign = "left";
       ctx.fillText("x=" + a, 22, y - 7);
-      // skew label
       ctx.fillStyle = "#4a5568"; ctx.font = "9px " + mono;
       ctx.fillText("z⁻" + r, 22, y + 14);
     }
-
-    // weight-load indicator
-    if (st === 2) {
+    if (f.st === 2) {
       ctx.fillStyle = "#c792ea"; ctx.font = "12px " + mono; ctx.textAlign = "center";
       ctx.fillText("⇩ preloading shadow weights (row-by-row)", peX(1.5) + CELL, 22);
-    } else if (st === 5) {
+    } else if (f.st === 5) {
       ctx.fillStyle = "#5af78e"; ctx.font = "12px " + mono; ctx.textAlign = "center";
       ctx.fillText("requantize: acc×M ≫ s → int8 / logits", peX(1.5) + CELL, 22);
     }
-
-    // PEs
     for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
       const pe = f.pe[r][c], x = peX(c), y = peY(r);
       const ah = heat(pe.a, 127), ph = heat(pe.p, 60000);
-      // cell
       ctx.fillStyle = `rgba(255,140,40,${(ph * 0.42).toFixed(3)})`;
       ctx.strokeStyle = ah > 0 ? `rgba(61,220,255,${(0.25 + ah * 0.75).toFixed(3)})` : "#2a3342";
       ctx.lineWidth = ah > 0 ? 2 : 1;
       roundRect(x, y, CELL, CELL, 7); ctx.fill(); ctx.stroke();
-      // weight
       ctx.fillStyle = "#8a94a6"; ctx.font = "10px " + mono; ctx.textAlign = "left";
       ctx.fillText("w " + pe.w, x + 8, y + 16);
-      // activation
       ctx.fillStyle = pe.a !== 0 ? "#3ddcff" : "#4a5568";
       ctx.font = "12px " + mono;
       ctx.fillText("a " + pe.a, x + 8, y + 36);
-      // psum
       ctx.fillStyle = pe.p !== 0 ? "#ffb454" : "#4a5568";
       ctx.font = "12px " + mono; ctx.textAlign = "right";
       ctx.fillText("Σ " + pe.p, x + CELL - 8, y + CELL - 12);
-      // flow arrows
       if (c < N - 1) {
         ctx.fillStyle = ah > 0 ? "#3ddcff" : "#2a3342";
         ctx.font = "11px " + mono; ctx.textAlign = "center";
@@ -308,8 +533,6 @@
         ctx.fillText("↓", x + CELL / 2, y + CELL + GAP / 2 + 4);
       }
     }
-
-    // drain row + accumulators
     const accY = peY(N) + 10;
     for (let c = 0; c < N; c++) {
       const x = peX(c), draining = (f.dv >> c) & 1;
@@ -327,37 +550,52 @@
       ctx.fillText("acc" + c + " (out " + (f.j * N + c) + ")", x + CELL / 2, accY + 50);
     }
   }
-  function roundRect(x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+
+  // ================= HUD =================
+  const CAPTIONS = {
+    1: () => "setting up the next output block…",
+    2: f => `<b>PRELOAD</b> — loading weight tile into shadow registers, row by row (output block ${f.j})`,
+    3: f => `<b>RUN</b> — tile ${f.t}/${(M.inTiles[f.l] - 1)}: activations sweep the array; next tile's weights load underneath`,
+    4: () => `<b>DRAIN</b> — last partial sums cascade down the columns into the accumulators`,
+    5: f => f.l === 2 ? `<b>REQUANT</b> — final layer: raw INT32 logits stream out`
+                      : `<b>REQUANT</b> — 32-bit accumulators × M ≫ s → 8-bit activations (ReLU folded in)`,
+    6: () => `<b>DONE</b> — argmax of the logits is the prediction`,
+  };
+  function logitsAt(i) {
+    if (i < logitCache.idx) logitCache = {idx: -1, vals: new Array(10).fill(null)};
+    for (let k = logitCache.idx + 1; k <= i; k++) {
+      const f = F[k];
+      if (f.req && f.l === 2) {
+        const base = f.j * N;
+        for (let c = 0; c < N; c++)
+          if (base + c < 10) logitCache.vals[base + c] = f.req.acc[c];
+      }
+    }
+    logitCache.idx = i;
+    return logitCache.vals;
   }
 
-  // ---- HUD ----
-  const el = id => document.getElementById(id);
-  function updateHUD(f, idx) {
+  function updateHUD(f, i) {
     el("c-cyc").textContent = f.c;
     el("c-state").textContent = STATES[f.st] || f.st;
-    el("c-layer").textContent = LAYER_NAMES[f.l];
-    el("c-tile").textContent = f.t + "/" + (D.inTiles[f.l] - 1);
-    el("c-blk").textContent = f.j + "/" + (D.outBlocks[f.l] - 1);
+    el("c-layer").textContent = f.l;
+    el("c-tile").textContent = f.t + "/" + (M.inTiles[f.l] - 1);
+    el("c-blk").textContent = f.j + "/" + (M.outBlocks[f.l] - 1);
+    el("caption").innerHTML = (CAPTIONS[f.st] || (() => ""))(f);
 
-    // per-layer progress = (block * tiles + tile) / total
     for (let l = 0; l < 3; l++) {
-      const total = D.inTiles[l] * D.outBlocks[l];
+      const total = M.inTiles[l] * M.outBlocks[l];
       let done = 0;
       if (f.l > l || f.st === 6) done = total;
-      else if (f.l === l) done = f.j * D.inTiles[l] + f.t + (f.st > 2 ? 1 : 0);
+      else if (f.l === l) done = f.j * M.inTiles[l] + f.t + (f.st > 2 ? 1 : 0);
       el("p" + l).style.width = (done / total * 100) + "%";
-      el("p" + l + "t").textContent =
-        Math.min(done, total) + "/" + total + " tiles";
+      el("p" + l + "t").textContent = Math.min(done, total) + "/" + total + " tiles";
     }
 
-    // logits + prediction
-    const lv = logitsAt(idx);
+    const lv = logitsAt(i);
     const known = lv.filter(v => v !== null).length;
-    const deq = lv.map(v => v === null ? null : v * D.logitScale);
+    const deq = lv.map(v => v === null ? null : v * M.logitScale);
+    const fmax = Math.max(...floatLogits.map(Math.abs));
     const rmax = Math.max(...deq.filter(v => v !== null).map(Math.abs), 1e-9);
     rows.forEach((r, k) => {
       const bar = r.querySelector(".rtl");
@@ -373,9 +611,10 @@
       el("pred-digit").textContent = best;
       el("pred-digit").classList.add("live");
       el("pred-conf").textContent = "confidence " + conf.toFixed(1) + "%";
-      el("pred-note").textContent = "true label: " + D.label;
+      el("pred-note").textContent = trueLabel !== null
+        ? "true label: " + trueLabel : "your drawing — you be the judge";
       el("verdict").innerHTML = best === floatBest
-        ? `RTL argmax = float argmax = <span class="ok">${best}</span> ✓ &nbsp;·&nbsp; INT32 logits bit-exact vs golden`
+        ? `RTL argmax = float argmax = <span class="ok">${best}</span> ✓`
         : `RTL ${best} ≠ float ${floatBest} (quantization flip)`;
     } else if (known > 0) {
       el("pred-digit").textContent = "·";
@@ -391,16 +630,12 @@
     }
   }
 
-  // ---- playback ----
-  let idx = 0, playing = false, acc = 0, last = 0;
-  const scrub = el("scrub");
-  scrub.max = NF - 1;
-
+  // ================= playback =================
   function show(i) {
+    if (!NF) return;
     idx = Math.max(0, Math.min(NF - 1, i));
-    const f = F[idx];
-    drawArray(f);
-    updateHUD(f, idx);
+    drawArray(F[idx]);
+    updateHUD(F[idx], idx);
     scrub.value = idx;
   }
   function setPlaying(p) {
@@ -419,23 +654,33 @@
     }
     requestAnimationFrame(tick);
   }
-
   el("btn-play").onclick = () => setPlaying(!playing);
   el("btn-step").onclick = () => { setPlaying(false); show(idx + 1); };
   el("btn-back").onclick = () => { setPlaying(false); show(idx - 1); };
   el("btn-restart").onclick = () => { setPlaying(false); show(0); };
   scrub.oninput = () => { setPlaying(false); show(+scrub.value); };
   document.querySelectorAll("[data-jump]").forEach(b => b.onclick = () => {
-    const m = { l0: layerStart[0], l1: layerStart[1], l2: layerStart[2], res: resStart };
+    if (!NF) return;
+    const m = {l0: layerStart[0], l1: layerStart[1], l2: layerStart[2], res: resStart};
     show(m[b.dataset.jump]); setPlaying(true);
   });
   document.addEventListener("keydown", e => {
+    if (e.target.tagName === "INPUT" && e.target.type === "checkbox") return;
+    if (!el("overlay").classList.contains("hidden")) return;
     if (e.code === "Space") { e.preventDefault(); setPlaying(!playing); }
     if (e.code === "ArrowRight") { setPlaying(false); show(idx + (e.shiftKey ? 10 : 1)); }
     if (e.code === "ArrowLeft") { setPlaying(false); show(idx - (e.shiftKey ? 10 : 1)); }
   });
 
+  // boot: load the reference example, run it, sit paused at cycle 0
+  const ref = M.examples[M.referenceExample];
+  setInput(ref.pix, {i: M.referenceExample, label: ref.label,
+                     floatLogits: ref.floatLogits, trueFloat: true});
+  runInference();
+  setPlaying(false);
   show(0);
+
+  window.PLAYER = {show, get frames() { return F; }, runInference, setInput};
 })();
 </script>
 </body>

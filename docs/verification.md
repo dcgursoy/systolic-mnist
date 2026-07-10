@@ -66,6 +66,20 @@ The trace infrastructure (per-cycle JSON dump of every PE) doubles as a
 debugging tool: bug 1's diagnosis came from grepping requantize events out of
 the trace and diffing against golden layer-0 partial sums.
 
+## A third model: the visualizer's JavaScript twin
+
+The interactive demo runs a register-for-register JavaScript model of the
+RTL (`viz/sim.js`) so users can classify their own digits. It is held to
+the same standard as the RTL itself: `viz/validate_sim.py` diffs every
+field of every per-cycle frame (controller state, all 16 PEs' a/w/Σ, drain
+bits, accumulators, requantize events) against the Icarus Verilog trace —
+16,271/16,271 frames identical — and checks INT32 logits against the
+Python golden model on all 200 exported test images. Three independent
+implementations (RTL, NumPy, JS) agreeing bit-for-bit is strong mutual
+evidence; the frame-level diff even caught a modeling subtlety during
+development (the activation-bank read lane follows `issue_b`, so reads
+return zero once the batch lane advances past the loaded image).
+
 ## Re-verification after the performance rework
 
 The weight double-buffering + pipelined-requantizer rework (swap tokens,

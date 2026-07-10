@@ -25,17 +25,19 @@ def main():
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1360, "height": 860})
+        page.add_init_script("localStorage.setItem('sysarr_intro_seen','1')")
         page.goto(URL)
-        page.wait_for_function("window.DEMO && document.getElementById('scrub').max > 0")
+        page.wait_for_function(
+            "window.PLAYER && window.PLAYER.frames.length > 0")
 
         def seek(i):
             page.evaluate(
                 "(i) => { const s = document.getElementById('scrub');"
                 "s.value = i; s.dispatchEvent(new Event('input')); }", i)
 
-        nf = int(page.evaluate("window.DEMO.frames.length"))
+        nf = int(page.evaluate("window.PLAYER.frames.length"))
         l2 = int(page.evaluate(
-            "window.DEMO.frames.findIndex(f => f.l === 2)"))
+            "window.PLAYER.frames.findIndex(f => f.l === 2)"))
 
         # hero: final results
         seek(nf - 1)
@@ -43,7 +45,7 @@ def main():
 
         # wave: first drain-phase cycle of layer 2 with the array mid-flight
         wave = int(page.evaluate(
-            "window.DEMO.frames.findIndex((f,i) => i > %d && f.st === 4 && f.dv)" % l2))
+            "window.PLAYER.frames.findIndex((f,i) => i > %d && f.st === 4 && f.dv)" % l2))
         seek(wave)
         page.screenshot(path=str(IMG / "viz_wave.png"))
 
